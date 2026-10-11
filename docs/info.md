@@ -9,7 +9,7 @@ You can also include images in this folder and reference them in the markdown. E
 
 ## How it works
 
-Explain how your project works
+Uses a SPI (Serial Peripheral Interface) to receive configuration commands from a main controller and translates them into local PWM (Pulse Width Modulation) signals to drive loads.
 
 ## How to test
 
