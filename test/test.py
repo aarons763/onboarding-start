@@ -4,6 +4,7 @@
 import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge
+from cocotb.triggers import FallingEdge
 from cocotb.triggers import ClockCycles
 from cocotb.types import Logic
 from cocotb.types import LogicArray
@@ -107,7 +108,7 @@ async def test_spi(dut):
     dut._log.info("Write transaction, address 0x00, data 0xF0")
     ui_in_val = await send_spi_transaction(dut, 1, 0x00, 0xF0)  # Write transaction
     assert dut.uo_out.value == 0xF0, f"Expected 0xF0, got {dut.uo_out.value}"
-    await ClockCycles(dut.clk, 1000) 
+    await ClockCycles(dut.clk, 1000)
 
     dut._log.info("Write transaction, address 0x01, data 0xCC")
     ui_in_val = await send_spi_transaction(dut, 1, 0x01, 0xCC)  # Write transaction
@@ -151,11 +152,158 @@ async def test_spi(dut):
 
 @cocotb.test()
 async def test_pwm_freq(dut):
-    # Write your test here
+    dut._log.info("Start PWM Frequency test")
+    
+    # Set the clock period to 100 ns (10 MHz)
+    clock = Clock(dut.clk, 100, units="ns")
+    cocotb.start_soon(clock.start())
+
+    # Reset
+    dut._log.info("Reset")
+    dut.ena.value = 1
+    ncs = 1
+    bit = 0
+    sclk = 0
+    dut.ui_in.value = ui_in_logicarray(ncs, bit, sclk)
+    dut.rst_n.value = 0
+    dut.uio_in.value = 0
+    await ClockCycles(dut.clk, 5)
+    dut.rst_n.value = 1
+    await ClockCycles(dut.clk, 5)
+
+    dut._log.info("Test project behavior")
+    await send_spi_transaction(dut, 1, 0x00, 0x01)  # Write transaction Enable outputs on uo_out[7:0]
+    await send_spi_transaction(dut, 1, 0x02, 0x01)  # Write transaction Enable PWM for uo_out[7:0]
+
+    dut._log.info("Write transaction, address 0x04 (PWM Duty Cycle), data 0x40 (25%), and measure frequency")
+    await send_spi_transaction(dut, 1, 0x04, 0x40)  # Write transaction
+    await RisingEdge(dut.uo_out[0])
+    t1 = cocotb.utils.get_sim_time(units="ns")
+    await RisingEdge(dut.uo_out[0])
+    t2 = cocotb.utils.get_sim_time(units="ns")
+    frequency = 10**9 / (t2 - t1)  # Calculate frequency in Hz
+    assert frequency >= 2970 and frequency <= 3030, f"Expected between 2970 and 3030 Hz, got {frequency} Hz"
+    await ClockCycles(dut.clk, 10000)
+
+    dut._log.info("Write transaction, address 0x04 (PWM Duty Cycle), data 0x80 (50%), and measure frequency")
+    await send_spi_transaction(dut, 1, 0x04, 0x80)  # Write transaction
+    await RisingEdge(dut.uo_out[0])
+    t1 = cocotb.utils.get_sim_time(units="ns")
+    await RisingEdge(dut.uo_out[0])
+    t2 = cocotb.utils.get_sim_time(units="ns")
+    frequency = 10**9 / (t2 - t1)  # Calculate frequency in Hz
+    assert frequency >= 2970 and frequency <= 3030, f"Expected between 2970 and 3030 Hz, got {frequency} Hz"
+    await ClockCycles(dut.clk, 10000)
+
+    dut._log.info("Write transaction, address 0x04 (PWM Duty Cycle), data 0xC0 (75%), and measure frequency")
+    await send_spi_transaction(dut, 1, 0x04, 0xC0)  # Write transaction
+    await RisingEdge(dut.uo_out[0])
+    t1 = cocotb.utils.get_sim_time(units="ns")
+    await RisingEdge(dut.uo_out[0])
+    t2 = cocotb.utils.get_sim_time(units="ns")
+    frequency = 10**9 / (t2 - t1)  # Calculate frequency in Hz
+    assert frequency >= 2970 and frequency <= 3030, f"Expected between 2970 and 3030 Hz, got {frequency} Hz"
+    await ClockCycles(dut.clk, 10000)
+    
     dut._log.info("PWM Frequency test completed successfully")
 
 
 @cocotb.test()
 async def test_pwm_duty(dut):
-    # Write your test here
+    dut._log.info("Start PWM Duty Cycle test")
+    
+    # Set the clock period to 100 ns (10 MHz)
+    clock = Clock(dut.clk, 100, units="ns")
+    cocotb.start_soon(clock.start())
+
+    # Reset
+    dut._log.info("Reset")
+    dut.ena.value = 1
+    ncs = 1
+    bit = 0
+    sclk = 0
+    dut.ui_in.value = ui_in_logicarray(ncs, bit, sclk)
+    dut.rst_n.value = 0
+    dut.uio_in.value = 0
+    await ClockCycles(dut.clk, 5)
+    dut.rst_n.value = 1
+    await ClockCycles(dut.clk, 5)
+
+    dut._log.info("Test project behavior")
+    await send_spi_transaction(dut, 1, 0x00, 0x01)  # Write transaction Enable outputs on uo_out[7:0]
+    await send_spi_transaction(dut, 1, 0x02, 0x01)  # Write transaction Enable PWM for uo_out[7:0]
+
+    dut._log.info("Write transaction, address 0x04 (PWM Duty Cycle), data 0x00 (0%), and measure Duty Cycle")
+    await send_spi_transaction(dut, 1, 0x04, 0x00)  # Write transaction
+    assert dut.uo_out.value == 0, f"Expected output low, got {dut.uo_out.value}"
+    await ClockCycles(dut.clk, 10000)
+
+    dut._log.info("Write transaction, address 0x04 (PWM Duty Cycle), data 0x80 (50%), and measure Duty Cycle")
+    await send_spi_transaction(dut, 1, 0x04, 0x80)  # Write transaction
+    await RisingEdge(dut.uo_out[0])
+    t1 = cocotb.utils.get_sim_time(units="ns")
+    await FallingEdge(dut.uo_out[0])
+    tf = cocotb.utils.get_sim_time(units="ns")
+    await RisingEdge(dut.uo_out[0])
+    t2 = cocotb.utils.get_sim_time(units="ns")
+    D_measured = (tf-t1) / (t2 - t1)  # Calculate duty cycle
+    assert D_measured >= 0.49 and D_measured <= 0.51, f"Expected 50% +/- 1%, got {D_measured*100:.2f}%"
+    await ClockCycles(dut.clk, 10000)
+
+    dut._log.info("Write transaction, address 0x04 (PWM Duty Cycle), data 0xFF (100%), and measure Duty Cycle")
+    await send_spi_transaction(dut, 1, 0x04, 0xFF)  # Write transaction
+    assert dut.uo_out.value == 1, f"Expected output high, got {dut.uo_out.value}"
+    await ClockCycles(dut.clk, 10000)
+
     dut._log.info("PWM Duty Cycle test completed successfully")
+
+@cocotb.test()
+async def test_pwm_enable(dut):
+    dut._log.info("Start PWM Enable test")
+    
+    # Set the clock period to 100 ns (10 MHz)
+    clock = Clock(dut.clk, 100, units="ns")
+    cocotb.start_soon(clock.start())
+
+    # Reset
+    dut._log.info("Reset")
+    dut.ena.value = 1
+    ncs = 1
+    bit = 0
+    sclk = 0
+    dut.ui_in.value = ui_in_logicarray(ncs, bit, sclk)
+    dut.rst_n.value = 0
+    dut.uio_in.value = 0
+    await ClockCycles(dut.clk, 5)
+    dut.rst_n.value = 1
+    await ClockCycles(dut.clk, 5)
+
+    dut._log.info("Test project behavior")
+    await send_spi_transaction(dut, 1, 0x04, 0xFF)  # Write transaction
+
+    dut._log.info("Write transaction, address 0x00-0x03 (enable outputs and PWM), data 0x00, and check output is low")
+    await send_spi_transaction(dut, 1, 0x00, 0x00)  # Write transaction
+    await send_spi_transaction(dut, 1, 0x01, 0x00)  # Write transaction
+    await send_spi_transaction(dut, 1, 0x02, 0x00)  # Write transaction
+    await send_spi_transaction(dut, 1, 0x03, 0x00)  # Write transaction
+    assert dut.uo_out.value == 0, f"Expected uo_out output low, got {dut.uo_out.value}"
+    assert dut.uio_out.value == 0, f"Expected uio_out output low, got {dut.uio_out.value}"
+    await ClockCycles(dut.clk, 10000)
+
+    dut._log.info("Write transaction, address 0x02-0x03 (enable PWM), data 0xFF, and check output is low")
+    await send_spi_transaction(dut, 1, 0x02, 0xFF)  # Write transaction
+    await send_spi_transaction(dut, 1, 0x03, 0xFF)  # Write transaction
+    assert dut.uo_out.value == 0, f"Expected uo_out output low, got {dut.uo_out.value}"
+    assert dut.uio_out.value == 0, f"Expected uio_out output low, got {dut.uio_out.value}"
+    await ClockCycles(dut.clk, 10000)
+
+    dut._log.info("Write transaction, address 0x00-0x01 (enable outputs), data 0xFF, address 0x02-0x03 (enable PWM), data 0x00, and check output is high")
+    await send_spi_transaction(dut, 1, 0x00, 0xFF)  # Write transaction
+    await send_spi_transaction(dut, 1, 0x01, 0xFF)  # Write transaction
+    await send_spi_transaction(dut, 1, 0x02, 0x00)  # Write transaction
+    await send_spi_transaction(dut, 1, 0x03, 0x00)  # Write transaction
+    assert dut.uo_out.value == 0xFF, f"Expected uo_out output 0xFF, got {dut.uo_out.value}"
+    assert dut.uio_out.value == 0xFF, f"Expected uio_out output 0xFF, got {dut.uio_out.value}"
+    await ClockCycles(dut.clk, 10000)
+
+    dut._log.info("PWM Enable test completed successfully")

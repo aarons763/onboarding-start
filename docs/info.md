@@ -13,8 +13,32 @@ Uses a SPI (Serial Peripheral Interface) to receive configuration commands from 
 
 ## How to test
 
-Explain how to use your project
+To run the RTL simulation:
+
+```sh
+make -B
+```
+
+To run gatelevel simulation, first harden your project and copy `../runs/wokwi/results/final/verilog/gl/{your_module_name}.v` to `gate_level_netlist.v`.
+
+Then run:
+
+```sh
+make -B GATES=yes
+```
+
+To view the VCD file:
+
+Using GTKWave
+```sh
+gtkwave tb.vcd tb.gtkw
+```
+
+Using Surfer
+```sh
+surfer tb.vcd
+```
 
 ## External hardware
 
-List external hardware used in your project (e.g. PMOD, LED display, etc), if any
+N/A
