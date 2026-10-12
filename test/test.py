@@ -177,9 +177,9 @@ async def test_pwm_freq(dut):
 
     dut._log.info("Write transaction, address 0x04 (PWM Duty Cycle), data 0x40 (25%), and measure frequency")
     await send_spi_transaction(dut, 1, 0x04, 0x40)  # Write transaction
-    await RisingEdge(dut.uo_out[0])
+    await RisingEdge(dut.pwm_output)
     t1 = cocotb.utils.get_sim_time(units="ns")
-    await RisingEdge(dut.uo_out[0])
+    await RisingEdge(dut.pwm_output)
     t2 = cocotb.utils.get_sim_time(units="ns")
     frequency = 10**9 / (t2 - t1)  # Calculate frequency in Hz
     assert frequency >= 2970 and frequency <= 3030, f"Expected between 2970 and 3030 Hz, got {frequency} Hz"
@@ -187,9 +187,9 @@ async def test_pwm_freq(dut):
 
     dut._log.info("Write transaction, address 0x04 (PWM Duty Cycle), data 0x80 (50%), and measure frequency")
     await send_spi_transaction(dut, 1, 0x04, 0x80)  # Write transaction
-    await RisingEdge(dut.uo_out[0])
+    await RisingEdge(dut.pwm_output)
     t1 = cocotb.utils.get_sim_time(units="ns")
-    await RisingEdge(dut.uo_out[0])
+    await RisingEdge(dut.pwm_output)
     t2 = cocotb.utils.get_sim_time(units="ns")
     frequency = 10**9 / (t2 - t1)  # Calculate frequency in Hz
     assert frequency >= 2970 and frequency <= 3030, f"Expected between 2970 and 3030 Hz, got {frequency} Hz"
@@ -197,9 +197,9 @@ async def test_pwm_freq(dut):
 
     dut._log.info("Write transaction, address 0x04 (PWM Duty Cycle), data 0xC0 (75%), and measure frequency")
     await send_spi_transaction(dut, 1, 0x04, 0xC0)  # Write transaction
-    await RisingEdge(dut.uo_out[0])
+    await RisingEdge(dut.pwm_output)
     t1 = cocotb.utils.get_sim_time(units="ns")
-    await RisingEdge(dut.uo_out[0])
+    await RisingEdge(dut.pwm_output)
     t2 = cocotb.utils.get_sim_time(units="ns")
     frequency = 10**9 / (t2 - t1)  # Calculate frequency in Hz
     assert frequency >= 2970 and frequency <= 3030, f"Expected between 2970 and 3030 Hz, got {frequency} Hz"
@@ -240,11 +240,11 @@ async def test_pwm_duty(dut):
 
     dut._log.info("Write transaction, address 0x04 (PWM Duty Cycle), data 0x80 (50%), and measure Duty Cycle")
     await send_spi_transaction(dut, 1, 0x04, 0x80)  # Write transaction
-    await RisingEdge(dut.uo_out[0])
+    await RisingEdge(dut.pwm_output)
     t1 = cocotb.utils.get_sim_time(units="ns")
-    await FallingEdge(dut.uo_out[0])
+    await FallingEdge(dut.pwm_output)
     tf = cocotb.utils.get_sim_time(units="ns")
-    await RisingEdge(dut.uo_out[0])
+    await RisingEdge(dut.pwm_output)
     t2 = cocotb.utils.get_sim_time(units="ns")
     D_measured = (tf-t1) / (t2 - t1)  # Calculate duty cycle
     assert D_measured >= 0.49 and D_measured <= 0.51, f"Expected 50% +/- 1%, got {D_measured*100:.2f}%"
