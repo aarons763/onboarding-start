@@ -6,6 +6,7 @@ from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge
 from cocotb.triggers import FallingEdge
 from cocotb.triggers import ClockCycles
+from cocotb.triggers import ReadOnly
 from cocotb.types import Logic
 from cocotb.types import LogicArray
 
@@ -235,7 +236,10 @@ async def test_pwm_duty(dut):
 
     dut._log.info("Write transaction, address 0x04 (PWM Duty Cycle), data 0x00 (0%), and measure Duty Cycle")
     await send_spi_transaction(dut, 1, 0x04, 0x00)  # Write transaction
-    assert dut.uo_out.value == 0, f"Expected output low, got {dut.uo_out.value}"
+    for cycle in range(10000):
+        await RisingEdge(dut.clk)
+        await ReadOnly()
+        assert dut.uo_out.value == 0, f"Expected low at cycle {cycle}, got {dut.uo_out.value}"
     await ClockCycles(dut.clk, 10000)
 
     dut._log.info("Write transaction, address 0x04 (PWM Duty Cycle), data 0x80 (50%), and measure Duty Cycle")
@@ -252,7 +256,10 @@ async def test_pwm_duty(dut):
 
     dut._log.info("Write transaction, address 0x04 (PWM Duty Cycle), data 0xFF (100%), and measure Duty Cycle")
     await send_spi_transaction(dut, 1, 0x04, 0xFF)  # Write transaction
-    assert dut.uo_out.value == 1, f"Expected output high, got {dut.uo_out.value}"
+    for cycle in range(10000):
+        await RisingEdge(dut.clk)
+        await ReadOnly()
+        assert dut.uo_out.value == 1, f"Expected high at cycle {cycle}, got {dut.uo_out.value}"
     await ClockCycles(dut.clk, 10000)
 
     dut._log.info("PWM Duty Cycle test completed successfully")
